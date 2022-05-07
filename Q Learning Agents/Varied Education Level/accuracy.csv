@@ -1,0 +1,4 @@
+Games Played,"(Q Agent): train_opponent=OptimalAgent,
+          num_heaps=3, max_elements=5,
+          α=0.4, γ=1, ε=0.05"
+0,0.191
