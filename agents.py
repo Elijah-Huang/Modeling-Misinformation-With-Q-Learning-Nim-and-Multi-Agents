@@ -3,7 +3,6 @@ import pickle
 import random
 import pandas as pd
 import os
-from typing import List
 from matplotlib import pyplot as plt
 from game import Game
 
@@ -23,7 +22,8 @@ class Agent:
             - a tuple representing the action: (heap chosen, elements to remove)
         """
 
-        heap_chosen = None; elements_to_remove = None
+        heap_chosen = None
+        elements_to_remove = None
         return heap_chosen, elements_to_remove
 
 
@@ -168,7 +168,7 @@ class ReverseOptimalAgent(Agent):
 
 
 class QLearningAgent(Agent):
-    def __init__(self, obj_dir: str, train_opponent_name : str = None,
+    def __init__(self, obj_dir: str, train_opponent_name: str = None,
                  num_heaps: int = None, max_elements: int = None,
                  alpha: float = None, gamma: float = None, epsilon: float = None,
                  reset: bool = False) -> None:
@@ -283,7 +283,8 @@ class QLearningAgent(Agent):
 
             self.obj_dir = obj_dir
             self.train_opponent_name = train_opponent_name
-            self.train_opponent = None; self.set_train_opponent(train_opponent_name)
+            self.train_opponent = None
+            self.set_train_opponent(train_opponent_name)
             self.num_heaps = num_heaps
             self.max_elements = max_elements
             self.alpha = alpha
@@ -316,7 +317,8 @@ class QLearningAgent(Agent):
                     next_states = set()
                     for heap_chosen in range(len(state)):
                         for elements_to_remove in range(1, state[heap_chosen]+1):
-                            game = Game(0, 0); game.heaps = state.copy()
+                            game = Game(0, 0)
+                            game.heaps = state.copy()
                             game.perform_action(heap_chosen, elements_to_remove)
                             new_state = tuple(game.heaps)
 
@@ -467,7 +469,7 @@ class QLearningAgent(Agent):
 
         return accuracy
 
-    def plot_accuracy(self, color : str = None) -> None:
+    def plot_accuracy(self, color: str = None) -> None:
         """
         **Description:**
             - Plots self.accuracy.
@@ -485,7 +487,7 @@ class QLearningAgent(Agent):
         plt.xlabel(self.accuracy.index.name, color = "purple")
         plt.ylabel("Percentage of Optimal Moves", color = "purple")
 
-    def save_accuracy_plot(self, color : str = None) -> None:
+    def save_accuracy_plot(self, color: str = None) -> None:
         """
         **Description:**
             - Plots self.accuracy and saves it.
@@ -525,7 +527,7 @@ class QLearningAgent(Agent):
         heap_chosen, elements_to_remove = best_action
         return heap_chosen, elements_to_remove
 
-    def set_train_opponent(self, opponent_name : str) -> None:
+    def set_train_opponent(self, opponent_name: str) -> None:
         """
         **Description:**
             - Sets the self.train_opponent_name and self.train_opponent attributes
