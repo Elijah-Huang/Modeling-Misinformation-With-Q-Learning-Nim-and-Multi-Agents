@@ -4,7 +4,13 @@ import random
 import pandas as pd
 import os
 from matplotlib import pyplot as plt
-from game import Game
+if __name__ == '__main__':
+    # add package directory to path so game is importable
+    from game import Game
+else:
+    # you are running a script != agents and importing agents from that script
+    # (this script's directory is in parent directory of "Nim")
+    from Nim.game import Game
 
 
 class Agent:
@@ -25,6 +31,23 @@ class Agent:
         heap_chosen = None
         elements_to_remove = None
         return heap_chosen, elements_to_remove
+
+    def test_accuracy_random(self, max_heaps : int, max_elements : int, num_actions: int) -> float:
+        """
+        **Description:**
+            - Test num_actions on random game states to find percentage of optimal moves
+
+        **Return:**
+            - float representing the accuracy (optimal actions / num_actions)
+        """
+
+        accuracy = 0
+        for action in range(num_actions):
+            game = Game(max_heaps, max_elements)
+            accuracy += game.perform_action(*self.action(game))
+        accuracy /= num_actions
+
+        return accuracy
 
 
 class RandomAgent(Agent):
@@ -169,7 +192,7 @@ class ReverseOptimalAgent(Agent):
 
 class QLearningAgent(Agent):
     def __init__(self, obj_dir: str, train_opponent_name: str = None,
-                 num_heaps: int = None, max_elements: int = None,
+                 max_heaps: int = None, max_elements: int = None,
                  alpha: float = None, gamma: float = None, epsilon: float = None,
                  reset: bool = False) -> None:
         """
@@ -188,7 +211,7 @@ class QLearningAgent(Agent):
               + Name of the opponent used to train the Q agent. Must be spelled exactly the same as the class name
                 (make "self" for the agent to train by playing itself)
 
-            - num_heaps: int
+            - max_heaps: int
 
               + number of heaps in initial game
 
@@ -227,7 +250,7 @@ class QLearningAgent(Agent):
 
               + object of some agent class determined by self.train_opponent_name
 
-            - num_heaps: int
+            - max_heaps: int
 
               + number of heaps in initial game.
 
@@ -285,22 +308,22 @@ class QLearningAgent(Agent):
             self.train_opponent_name = train_opponent_name
             self.train_opponent = None
             self.set_train_opponent(train_opponent_name)
-            self.num_heaps = num_heaps
+            self.max_heaps = max_heaps
             self.max_elements = max_elements
             self.alpha = alpha
             self.gamma = gamma
             self.epsilon = epsilon
             self.played_games = 0
             self.name = f'(Q Agent): train_opponent={self.train_opponent_name},\n' \
-                        f'          num_heaps={self.num_heaps}, max_elements={self.max_elements},\n' \
+                        f'          max_heaps={self.max_heaps}, max_elements={self.max_elements},\n' \
                         f'          α={alpha}, γ={gamma}, ε={epsilon}'
             self.ascii_name = f'(Q Agent) train_opponent={self.train_opponent_name}, ' \
-                              f'num_heaps={self.num_heaps}, max_elements={self.max_elements}, ' \
+                              f'max_heaps={self.max_heaps}, max_elements={self.max_elements}, ' \
                               f'alpha={alpha}, gamma={gamma}, epsilon={epsilon}'
 
             # create new Q table
             self.Q = {}
-            for i in range(pow(self.max_elements+1, self.num_heaps)):
+            for i in range(pow(self.max_elements+1, self.max_heaps)):
                 # i represents a state in base max_elements+1
                 state = []
                 while i:
@@ -317,8 +340,7 @@ class QLearningAgent(Agent):
                     next_states = set()
                     for heap_chosen in range(len(state)):
                         for elements_to_remove in range(1, state[heap_chosen]+1):
-                            game = Game(0, 0)
-                            game.heaps = state.copy()
+                            game = Game(0, 0, state.copy())
                             game.perform_action(heap_chosen, elements_to_remove)
                             new_state = tuple(game.heaps)
 
@@ -404,7 +426,7 @@ class QLearningAgent(Agent):
 
                 self.save(self.obj_dir + '/obj')
 
-            game = Game(self.num_heaps, self.max_elements)
+            game = Game(self.max_heaps, self.max_elements)
             turn = 0
             q_agent_last_action = None
             prev_heaps = None # heaps right before q agent's last action
@@ -431,7 +453,7 @@ class QLearningAgent(Agent):
                     game.perform_action(*action)
 
                     # update Q if game has not ended
-                    if game.heaps and q_agent_last_action:
+                    if not game.finished() and q_agent_last_action:
                         self.update_q(prev_heaps, q_agent_last_action, 0, game.heaps)
 
             # turn is now the total turns in the completed game
@@ -452,7 +474,7 @@ class QLearningAgent(Agent):
         with open(obj_file, 'wb') as fout:
             pickle.dump(self, fout)
 
-    def test_accuracy(self, num_actions: int = 1000) -> float:
+    def test_accuracy_random(self, num_actions: int = 1000) -> float:
         """
         **Description:**
             - Test num_actions on random game states to find percentage of optimal moves
@@ -466,6 +488,24 @@ class QLearningAgent(Agent):
             game = Game(self.num_heaps, self.max_elements)
             accuracy += game.perform_action(*self.action(game))
         accuracy /= num_actions
+
+        return accuracy
+
+    def test_accuracy(self) -> float:
+        """
+        **Description:**
+            - Find accuracy by checking every single unfinished state exactly once (no randomness)
+
+        **Return:**
+            - float representing the accuracy (optimal actions / num_actions)
+        """
+
+        accuracy = 0
+        for state in self.Q:
+            if state:
+                game = Game(0, 0, list(state))
+                accuracy += game.perform_action(*self.action(game))
+        accuracy /= (len(self.Q)-1)
 
         return accuracy
 
@@ -543,4 +583,4 @@ class QLearningAgent(Agent):
         if self.train_opponent_name == 'self':
             self.train_opponent = self
         else:
-            exec('self.train_opponent = eval(self.train_opponent_name)()')
+            self.train_opponent = eval(self.train_opponent_name)()

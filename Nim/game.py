@@ -1,10 +1,11 @@
 # Note that the Game class needs the Agent class from module agents for type hints, but agents needs the Game class
 # To solve this circular dependency, we use "forward references": https://peps.python.org/pep-0484/#forward-references
 import random
+from typing import List
 
 
 class Game:
-    def __init__(self, num_heaps: int, max_elements: int) -> None:
+    def __init__(self, num_heaps: int, max_elements: int, heaps : List[int] = None) -> None:
         """
         **Description:**
             - Generates a random game of nim (represented by heaps).
@@ -16,20 +17,24 @@ class Game:
         **Parameters:**
             - num_heaps: int
 
-              + number of heaps in initial game
+              + maximum number of heaps
 
             - max_elements: int
 
               + maximum number of elements per heap
+
+            - heaps
+
+              + initial game state (leave argument empty to create a random game)
 
         **Attributes:**
             - num_heaps: int
 
-              + number of heaps in initial game
+              + number of heaps in initial game (only used to generate random game)
 
             - max_elements: int
 
-              + maximum number of elements per heap
+              + maximum number of elements per heap (only used to generate random game)
 
             - heaps: List[int]
 
@@ -46,7 +51,11 @@ class Game:
 
         self.num_heaps = num_heaps
         self.max_element = max_elements
-        self.heaps = sorted([random.randint(1, max_elements) for i in range(num_heaps)], reverse=True)
+        if heaps:
+            self.heaps = heaps.copy()
+        else:
+            self.heaps = sorted([random.randint(1, max_elements)
+                                 for i in range(random.randint(1, num_heaps))], reverse=True)
         self.xor_sum = 0
         for heap in self.heaps:
             self.xor_sum ^= heap
